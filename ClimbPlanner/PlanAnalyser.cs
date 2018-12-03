@@ -127,7 +127,7 @@ namespace ClimbPlanner
       outputBuilder.AppendLine();
       outputBuilder.AppendLine($"{entityName} : {description}");
 
-      AppendEntityGearItems(outputBuilder);
+      AppendEntityGearItemsTable(outputBuilder);
     }
 
     private RouteEntity GetOrCreateRouteEntity(in string name)
@@ -140,7 +140,7 @@ namespace ClimbPlanner
       return _routeEntitiesByName[name];
     }
 
-    private void AppendEntityGearItems(in StringBuilder outputBuilder)
+    private void AppendEntityGearItemsTable(in StringBuilder outputBuilder)
     {
       outputBuilder.Append("<p><table border='1'>");
       outputBuilder.Append("<tr><td></td>");
@@ -175,7 +175,7 @@ namespace ClimbPlanner
           if (entity.QuantityByGearItem.ContainsKey(item))
           {
             outputBuilder.Append($"{entity.QuantityByGearItem[item]}");
-            
+
             total += entity.QuantityByGearItem[item];
           }
 
