@@ -27,13 +27,15 @@
 					"FromEntity": "C1",
 					"ToEntity": "C2",
 					"GearItem": "G1",
-					"Quantity": 1
+					"Quantity": 1,
+          "Description": "Abc"
 				},
         {
 					"FromEntity": "C1",
 					"ToEntity": "C2",
 					"GearItem": "G2",
-					"Quantity": 2
+					"Quantity": 2,
+          "Description": ""
 				}
 			]
 		},
@@ -45,13 +47,15 @@
 					"FromEntity": "C2",
 					"ToEntity": "C1",
 					"GearItem": "G2",          
-					"Quantity": 2
+					"Quantity": 2,
+          "Description": ""
 				},
         {
 					"FromEntity": "C2",
 					"ToEntity": "C1",
 					"GearItem": "G1",          
-					"Quantity": 1
+					"Quantity": 1,
+          "Description": "Def"
 				}
 			]
 		}

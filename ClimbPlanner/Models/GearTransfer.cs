@@ -6,17 +6,20 @@
     public string ToEntity { get; }
     public string GearItem { get; }
     public int Quantity { get; }
+    public string Description { get; }
 
     public GearTransfer(
       string fromEntity,
       string toEntity,
       string gearItem,
-      int quantity)
+      int quantity,
+      string description)
     {
       FromEntity = fromEntity;
       ToEntity = toEntity;
       GearItem = gearItem;
       Quantity = quantity;
+      Description = description;
     }
   }
 }

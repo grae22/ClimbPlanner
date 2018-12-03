@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -10,6 +11,8 @@ namespace ClimbPlanner
 {
   internal class PlanAnalyser
   {
+    private const string GearStash = "GearStash"; // Excluded as entity from report.
+
     private readonly FileSystemWatcher _fileSystemWatcher;
     private readonly string _planFilename;
     private readonly Dictionary<string, RouteEntity> _routeEntitiesByName = new Dictionary<string, RouteEntity>();
@@ -77,15 +80,26 @@ namespace ClimbPlanner
 
     private void ProcessPlanAction(in PlanAction action, in StringBuilder outputBuilder)
     {
-      ProcessGearTransfers(action.GearTransfers);
-
       outputBuilder.AppendLine();
-      outputBuilder.AppendLine($"{action.Title}");
+      outputBuilder.AppendLine("<p>");
+      outputBuilder.AppendLine($"<b>{action.Title}</b>");
+      outputBuilder.AppendLine("<br />");
+
+      if (action.GearTransfers.Any(gt => gt.Description?.Any() ?? false))
+      {
+        outputBuilder.AppendLine("<br />");
+      }
+
+      ProcessGearTransfers(action.GearTransfers, outputBuilder);
 
       AppendEntityGearItemsTable(outputBuilder);
+
+      outputBuilder.AppendLine("</p><hr />");
     }
 
-    private void ProcessGearTransfers(in IEnumerable<GearTransfer> gearTransfers)
+    private void ProcessGearTransfers(
+      in IEnumerable<GearTransfer> gearTransfers,
+      in StringBuilder outputBuilder)
     {
       foreach (var transfer in gearTransfers)
       {
@@ -102,16 +116,33 @@ namespace ClimbPlanner
           _gearItems.Add(item.Value);
         }
 
-        if (item.HasValue &&
-            !string.IsNullOrWhiteSpace(transfer.FromEntity) &&
-            !string.IsNullOrWhiteSpace(transfer.ToEntity))
-        {
-          var debitEntity = GetOrCreateRouteEntity(transfer.FromEntity);
-          var creditEntity = GetOrCreateRouteEntity(transfer.ToEntity);
+        ProcessGearTransfer(item, transfer, outputBuilder);
+      }
+    }
 
-          debitEntity.RemoveGearItem(item.Value, transfer.Quantity);
-          creditEntity.AssignGearItem(item.Value, transfer.Quantity);
-        }
+    private void ProcessGearTransfer(
+      in GearItem? item,
+      in GearTransfer transfer,
+      in StringBuilder outputBuilder)
+    {
+      if (!item.HasValue ||
+          string.IsNullOrWhiteSpace(transfer.FromEntity) ||
+          string.IsNullOrWhiteSpace(transfer.ToEntity))
+      {
+        return;
+      }
+
+      var debitEntity = GetOrCreateRouteEntity(transfer.FromEntity);
+      var creditEntity = GetOrCreateRouteEntity(transfer.ToEntity);
+
+      debitEntity.RemoveGearItem(item.Value, transfer.Quantity);
+      creditEntity.AssignGearItem(item.Value, transfer.Quantity);
+
+      if (!string.IsNullOrWhiteSpace(transfer.Description))
+      {
+        outputBuilder.AppendLine($"{transfer.FromEntity} => {transfer.ToEntity} <b>:</b> ");
+        outputBuilder.AppendLine($"({transfer.GearItem} x {transfer.Quantity}) <b>:</b> {transfer.Description}");
+        outputBuilder.AppendLine("<br />");
       }
     }
 
@@ -132,7 +163,7 @@ namespace ClimbPlanner
 
       foreach (var entity in _routeEntitiesByName.Values)
       {
-        if (entity.Name.Equals("GearStash", StringComparison.OrdinalIgnoreCase))
+        if (entity.Name.Equals(GearStash, StringComparison.OrdinalIgnoreCase))
         {
           continue;
         }
@@ -150,7 +181,7 @@ namespace ClimbPlanner
 
         foreach (var entity in _routeEntitiesByName.Values)
         {
-          if (entity.Name.Equals("GearStash", StringComparison.OrdinalIgnoreCase))
+          if (entity.Name.Equals(GearStash, StringComparison.OrdinalIgnoreCase))
           {
             continue;
           }
