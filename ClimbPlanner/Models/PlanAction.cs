@@ -2,12 +2,12 @@
 
 namespace ClimbPlanner.Models
 {
-  internal struct Action
+  internal struct PlanAction
   {
     public string Title { get; }
     public IEnumerable<GearTransfer> GearTransfers { get; }
 
-    public Action(
+    public PlanAction(
       string title,
       IEnumerable<GearTransfer> gearTransfers)
     {

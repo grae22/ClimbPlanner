@@ -6,23 +6,10 @@ using System.Threading;
 
 using ClimbPlanner.Models;
 
-using Newtonsoft.Json;
-
 namespace ClimbPlanner
 {
   internal class PlanAnalyser
   {
-    private enum PlanFileFields
-    {
-      RouteEntity,
-      Description,
-      GearItem,
-      Quantity,
-      DebitEntity,
-      CreditEntity,
-      Count
-    }
-
     private readonly FileSystemWatcher _fileSystemWatcher;
     private readonly string _planFilename;
     private readonly Dictionary<string, RouteEntity> _routeEntitiesByName = new Dictionary<string, RouteEntity>();
@@ -36,6 +23,8 @@ namespace ClimbPlanner
 
       _fileSystemWatcher = new FileSystemWatcher(directoryPath);
       _fileSystemWatcher.EnableRaisingEvents = true;
+      _fileSystemWatcher.Filter = Path.GetFileName(planFilename);
+      _fileSystemWatcher.NotifyFilter = NotifyFilters.LastWrite;
       _fileSystemWatcher.Changed += OnPlanFileChanged;
 
       OnPlanFileChanged(
@@ -48,12 +37,11 @@ namespace ClimbPlanner
 
     private void OnPlanFileChanged(object source, FileSystemEventArgs args)
     {
-      if (!args.FullPath.Equals(_planFilename, StringComparison.OrdinalIgnoreCase))
-      {
-        return;
-      }
+      _fileSystemWatcher.EnableRaisingEvents = false;
 
       ParsePlanFile();
+
+      _fileSystemWatcher.EnableRaisingEvents = true;
     }
 
     private void ParsePlanFile()
@@ -67,14 +55,12 @@ namespace ClimbPlanner
 
         Thread.Sleep(500);
 
-        //string fileContent = File.ReadAllText(_planFilename);
-        //Plan plan = Plan.Deserialise(fileContent);
+        string fileContent = File.ReadAllText(_planFilename);
+        Plan plan = Plan.Deserialise(fileContent);
 
-        string[] fileLines = File.ReadAllLines(_planFilename);
-
-        foreach (string line in fileLines)
+        foreach (var action in plan.Actions)
         {
-          ProcessPlanFileLine(line, outputBuilder);
+          ProcessPlanAction(action, outputBuilder);
         }
 
         File.WriteAllText(
@@ -89,52 +75,44 @@ namespace ClimbPlanner
       }
     }
 
-    private void ProcessPlanFileLine(in string line, in StringBuilder outputBuilder)
+    private void ProcessPlanAction(in PlanAction action, in StringBuilder outputBuilder)
     {
-      string[] fields = line.Split('|');
-
-      if (fields.Length != (int)PlanFileFields.Count)
-      {
-        throw new Exception($"Incorrect number of fields: \"{line}\"");
-      }
-
-      var entityName = fields[(int)PlanFileFields.RouteEntity].Trim();
-      var description = fields[(int)PlanFileFields.Description].Trim();
-      var itemName = fields[(int)PlanFileFields.GearItem].Trim();
-      var debitEntityName = fields[(int)PlanFileFields.DebitEntity].Trim();
-      var creditEntityName = fields[(int)PlanFileFields.CreditEntity].Trim();
-      var quantity = int.Parse(fields[(int)PlanFileFields.Quantity]);
-
-      GearItem? item = null;
-
-      if (!string.IsNullOrWhiteSpace(itemName))
-      {
-        item = new GearItem(itemName);
-      }
-
-      GetOrCreateRouteEntity(entityName);
-
-      if (item.HasValue &&
-          !_gearItems.Contains(item.Value))
-      {
-        _gearItems.Add(item.Value);
-      }
-
-      if (item.HasValue &&
-          !string.IsNullOrWhiteSpace(debitEntityName) &&
-          !string.IsNullOrWhiteSpace(creditEntityName))
-      {
-        var debitEntity = GetOrCreateRouteEntity(debitEntityName);
-        var creditEntity = GetOrCreateRouteEntity(creditEntityName);
-
-        debitEntity.RemoveGearItem(item.Value, quantity);
-        creditEntity.AssignGearItem(item.Value, quantity);
-      }
+      ProcessGearTransfers(action.GearTransfers);
 
       outputBuilder.AppendLine();
-      outputBuilder.AppendLine($"{entityName} : {description}");
+      outputBuilder.AppendLine($"{action.Title}");
 
       AppendEntityGearItemsTable(outputBuilder);
+    }
+
+    private void ProcessGearTransfers(in IEnumerable<GearTransfer> gearTransfers)
+    {
+      foreach (var transfer in gearTransfers)
+      {
+        GearItem? item = null;
+
+        if (!string.IsNullOrWhiteSpace(transfer.GearItem))
+        {
+          item = new GearItem(transfer.GearItem);
+        }
+
+        if (item.HasValue &&
+            !_gearItems.Contains(item.Value))
+        {
+          _gearItems.Add(item.Value);
+        }
+
+        if (item.HasValue &&
+            !string.IsNullOrWhiteSpace(transfer.FromEntity) &&
+            !string.IsNullOrWhiteSpace(transfer.ToEntity))
+        {
+          var debitEntity = GetOrCreateRouteEntity(transfer.FromEntity);
+          var creditEntity = GetOrCreateRouteEntity(transfer.ToEntity);
+
+          debitEntity.RemoveGearItem(item.Value, transfer.Quantity);
+          creditEntity.AssignGearItem(item.Value, transfer.Quantity);
+        }
+      }
     }
 
     private RouteEntity GetOrCreateRouteEntity(in string name)

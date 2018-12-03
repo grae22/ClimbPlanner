@@ -6,9 +6,9 @@ namespace ClimbPlanner.Models
 {
   internal struct Plan
   {
-    public IEnumerable<Action> Actions { get; }
+    public IEnumerable<PlanAction> Actions { get; }
 
-    public Plan(IEnumerable<Action> actions)
+    public Plan(IEnumerable<PlanAction> actions)
     {
       Actions = actions;
     }

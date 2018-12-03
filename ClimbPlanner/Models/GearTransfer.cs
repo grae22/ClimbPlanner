@@ -4,13 +4,13 @@
   {
     public string FromEntity { get; }
     public string ToEntity { get; }
-    public GearItem GearItem { get; }
+    public string GearItem { get; }
     public int Quantity { get; }
 
     public GearTransfer(
       string fromEntity,
       string toEntity,
-      GearItem gearItem,
+      string gearItem,
       int quantity)
     {
       FromEntity = fromEntity;
