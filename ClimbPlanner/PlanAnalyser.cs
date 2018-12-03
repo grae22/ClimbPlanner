@@ -158,7 +158,7 @@ namespace ClimbPlanner
 
     private void AppendEntityGearItemsTable(in StringBuilder outputBuilder)
     {
-      outputBuilder.Append("<p><table border='1'>");
+      outputBuilder.Append("<p><table border='1' style='border-collapse:collapse; border-color:#b0b0b0;' cellpadding='3px'>");
       outputBuilder.Append("<tr><td></td>");
 
       foreach (var entity in _routeEntitiesByName.Values)
@@ -168,16 +168,16 @@ namespace ClimbPlanner
           continue;
         }
 
-        outputBuilder.AppendLine($"<td>{entity.Name}</td>");
+        outputBuilder.AppendLine($"<td bgcolor='#f0f0ff'><b>{entity.Name}</b></td>");
       }
 
-      outputBuilder.Append("<td>Total</td></tr>");
+      outputBuilder.Append("<td bgcolor='#fff0f0'><b>Total<b/></td></tr>");
 
       foreach(var item in _gearItems)
       {
         int total = 0;
 
-        outputBuilder.Append($"<tr><td>{item.Name}</td>");
+        outputBuilder.Append($"<tr><td bgcolor='#f0fff0'><b>{item.Name}</b></td>");
 
         foreach (var entity in _routeEntitiesByName.Values)
         {
@@ -198,7 +198,7 @@ namespace ClimbPlanner
           outputBuilder.Append("</td>");
         }
 
-        outputBuilder.Append($"<td align='center'>{total}</td></tr>");
+        outputBuilder.Append($"<td align='center' bgcolor='#fff0f0'>{total}</td></tr>");
       }
 
       outputBuilder.Append("</table></p>");
