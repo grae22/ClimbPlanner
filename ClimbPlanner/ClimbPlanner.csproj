@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ItemQuantityChangeTracker.cs" />
+    <Compile Include="Models\AssertPossession.cs" />
     <Compile Include="Models\PlanAction.cs" />
     <Compile Include="Models\GearTransfer.cs" />
     <Compile Include="Models\Plan.cs" />

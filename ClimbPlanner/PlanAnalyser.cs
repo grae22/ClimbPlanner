@@ -106,6 +106,8 @@ namespace ClimbPlanner
         AppendEntityGearItemsTable(outputBuilder);
       }
 
+      ProcessPossessionAsserts(action.PossessionAsserts, outputBuilder);
+
       outputBuilder.AppendLine("</p><hr />");
     }
 
@@ -113,6 +115,11 @@ namespace ClimbPlanner
       in IEnumerable<GearTransfer> gearTransfers,
       in StringBuilder outputBuilder)
     {
+      if (gearTransfers == null)
+      {
+        return;
+      }
+
       foreach (var transfer in gearTransfers)
       {
         GearItem? item = null;
@@ -170,6 +177,32 @@ namespace ClimbPlanner
         outputBuilder.AppendLine($"{transfer.FromEntity} => {transfer.ToEntity} <b>:</b> ");
         outputBuilder.AppendLine($"({transfer.GearItem} x {transfer.Quantity}) <b>:</b> {transfer.Description}");
         outputBuilder.AppendLine("<br />");
+      }
+    }
+
+    private void ProcessPossessionAsserts(
+      in IEnumerable<AssertPossession> possessionAsserts,
+      in StringBuilder outputBuilder)
+    {
+      if (possessionAsserts == null)
+      {
+        return;
+      }
+
+      foreach (var assert in possessionAsserts)
+      {
+        RouteEntity entity = GetOrCreateRouteEntity(assert.Entity);
+
+        var item = new GearItem(assert.GearItem);
+
+        if (entity.QuantityByGearItem.ContainsKey(item) &&
+            entity.QuantityByGearItem[item] >= assert.Quantity)
+        {
+          continue;
+        }
+
+        outputBuilder.AppendLine(
+          $"<div style='color:red;'>\"{entity.Name}\" requires {assert.Quantity} \"{assert.GearItem}(s)\"</div>");
       }
     }
 
