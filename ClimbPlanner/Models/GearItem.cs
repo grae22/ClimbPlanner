@@ -1,10 +1,10 @@
-﻿namespace ClimbPlanner
+﻿namespace ClimbPlanner.Models
 {
   internal struct GearItem
   {
     public string Name { get; }
 
-    public GearItem(in string name)
+    public GearItem(string name)
     {
       Name = name;
     }

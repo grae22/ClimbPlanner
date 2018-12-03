@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 
+using ClimbPlanner.Models;
+
 namespace ClimbPlanner
 {
   internal class RouteEntity

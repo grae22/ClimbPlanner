@@ -1,0 +1,53 @@
+{
+	"Actions":
+  [
+    {
+			"Title": "Step 1",
+			"GearTransfers":
+      [
+        {
+					"FromEntity": "C1",
+					"ToEntity": "C2",
+					"GearItem":
+          {
+						"Name": "G1"
+					},
+					"Quantity": 1
+				},
+        {
+					"FromEntity": "C1",
+					"ToEntity": "C2",
+					"GearItem":
+          {
+						"Name": "G2"
+					},
+					"Quantity": 2
+				}
+			]
+		},
+    {
+			"Title": "Step 2",
+			"GearTransfers":
+      [
+        {
+					"FromEntity": "C2",
+					"ToEntity": "C1",
+					"GearItem":
+          {
+						"Name": "G2"
+					},
+					"Quantity": 2
+				},
+        {
+					"FromEntity": "C2",
+					"ToEntity": "C1",
+					"GearItem":
+          {
+						"Name": "G1"
+					},
+					"Quantity": 1
+				}
+			]
+		}
+	]
+}

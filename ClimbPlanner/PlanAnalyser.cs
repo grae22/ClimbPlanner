@@ -4,6 +4,10 @@ using System.IO;
 using System.Text;
 using System.Threading;
 
+using ClimbPlanner.Models;
+
+using Newtonsoft.Json;
+
 namespace ClimbPlanner
 {
   internal class PlanAnalyser
@@ -62,6 +66,9 @@ namespace ClimbPlanner
         var outputBuilder = new StringBuilder();
 
         Thread.Sleep(500);
+
+        //string fileContent = File.ReadAllText(_planFilename);
+        //Plan plan = Plan.Deserialise(fileContent);
 
         string[] fileLines = File.ReadAllLines(_planFilename);
 
