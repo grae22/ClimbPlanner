@@ -17,6 +17,7 @@ namespace ClimbPlanner
     private readonly string _planFilename;
     private readonly Dictionary<string, RouteEntity> _routeEntitiesByName = new Dictionary<string, RouteEntity>();
     private readonly List<GearItem> _gearItems = new List<GearItem>();
+    private readonly ItemQuantityChangeTracker _itemQuantityChangeTracker = new ItemQuantityChangeTracker();
 
     public PlanAnalyser(in string planFilename)
     {
@@ -58,6 +59,7 @@ namespace ClimbPlanner
     {
       _routeEntitiesByName.Clear();
       _gearItems.Clear();
+      _itemQuantityChangeTracker.Reset();
 
       try
       {
@@ -99,7 +101,10 @@ namespace ClimbPlanner
 
       ProcessGearTransfers(action.GearTransfers, outputBuilder);
 
-      AppendEntityGearItemsTable(outputBuilder);
+      if (action.GearTransfers.Any(gt => gt.Quantity > 0))
+      {
+        AppendEntityGearItemsTable(outputBuilder);
+      }
 
       outputBuilder.AppendLine("</p><hr />");
     }
@@ -139,11 +144,26 @@ namespace ClimbPlanner
         return;
       }
 
+      if (transfer.Quantity < 0)
+      {
+        throw new ArgumentException("Transfer quantity cannot be negative.", nameof(transfer));
+      }
+
       var debitEntity = GetOrCreateRouteEntity(transfer.FromEntity);
       var creditEntity = GetOrCreateRouteEntity(transfer.ToEntity);
 
       debitEntity.RemoveGearItem(item.Value, transfer.Quantity);
       creditEntity.AssignGearItem(item.Value, transfer.Quantity);
+
+      _itemQuantityChangeTracker.Add(
+        transfer.ToEntity,
+        item.Value.Name,
+        transfer.Quantity);
+
+      _itemQuantityChangeTracker.Subtract(
+        transfer.FromEntity,
+        item.Value.Name,
+        transfer.Quantity);
 
       if (!string.IsNullOrWhiteSpace(transfer.Description))
       {
@@ -168,6 +188,7 @@ namespace ClimbPlanner
       outputBuilder.Append("<p><table border='1' style='border-collapse:collapse; border-color:#b0b0b0;' cellpadding='3px'>");
       outputBuilder.Append("<tr><td></td>");
 
+      // Column headers (entities).
       foreach (var entity in _routeEntitiesByName.Values)
       {
         if (entity.Name.Equals(GearStash, StringComparison.OrdinalIgnoreCase))
@@ -180,6 +201,7 @@ namespace ClimbPlanner
 
       outputBuilder.Append("<td bgcolor='#fff0f0'><b>Total<b/></td></tr>");
 
+      // Rows (items).
       foreach(var item in _gearItems)
       {
         int total = 0;
@@ -199,13 +221,32 @@ namespace ClimbPlanner
           {
             int quantity = entity.QuantityByGearItem[item];
 
-            if (quantity > -1)
+            int quantityChange = _itemQuantityChangeTracker.GetChangeInQuantitySinceLastCheck(entity.Name, item.Name);
+
+            // Quantity changes are emphasized.
+            string colour;
+
+            if (quantityChange > 0)
             {
-              outputBuilder.Append(quantity);
+              colour = "#00c000";
+            }
+            else if (quantityChange < 0)
+            {
+              colour = "#f00000";
             }
             else
             {
-              outputBuilder.Append($"<span style='color:red; font-weight:bold;'>{quantity}</span>");
+              colour = "black";
+            }
+
+            // Negative quantities are emphasized;
+            if (quantity > -1)
+            {
+              outputBuilder.Append($"<span style='color:{colour};'>{quantity}</span>");
+            }
+            else
+            {
+              outputBuilder.Append($"<span style='color:{colour}; font-weight:bold;'><b>({quantity})</b></span>");
             }
 
             total += entity.QuantityByGearItem[item];
