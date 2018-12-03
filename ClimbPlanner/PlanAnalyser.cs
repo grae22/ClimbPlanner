@@ -42,7 +42,14 @@ namespace ClimbPlanner
     {
       _fileSystemWatcher.EnableRaisingEvents = false;
 
-      ParsePlanFile();
+      try
+      {
+        ParsePlanFile();
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine(ex.Message);
+      }
 
       _fileSystemWatcher.EnableRaisingEvents = true;
     }
@@ -190,7 +197,16 @@ namespace ClimbPlanner
 
           if (entity.QuantityByGearItem.ContainsKey(item))
           {
-            outputBuilder.Append($"{entity.QuantityByGearItem[item]}");
+            int quantity = entity.QuantityByGearItem[item];
+
+            if (quantity > -1)
+            {
+              outputBuilder.Append(quantity);
+            }
+            else
+            {
+              outputBuilder.Append($"<span style='color:red; font-weight:bold;'>{quantity}</span>");
+            }
 
             total += entity.QuantityByGearItem[item];
           }
