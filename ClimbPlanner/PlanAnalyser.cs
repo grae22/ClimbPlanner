@@ -97,12 +97,11 @@ namespace ClimbPlanner
       outputBuilder.AppendLine($"<b>{action.Title}</b>");
       outputBuilder.AppendLine("<br />");
 
-      if (action.GearTransfers.Any(gt => gt.Description?.Any() ?? false))
-      {
-        outputBuilder.AppendLine("<br />");
-      }
+      outputBuilder.AppendLine("<p>");
 
       ProcessGearTransfers(action.GearTransfers, outputBuilder);
+
+      outputBuilder.AppendLine("</p>");
 
       if (action.GearTransfers.Any(gt => gt.Quantity > 0))
       {
@@ -296,7 +295,7 @@ namespace ClimbPlanner
           }
         }
 
-        outputBuilder.Append($"<td align='center' bgcolor='#fff0f0'>{total}</td></tr>");
+        outputBuilder.Append($"<td align='center' bgcolor='#fff0f0'><b>{total}</b></td></tr>");
       }
 
       outputBuilder.Append("</table></p>");
