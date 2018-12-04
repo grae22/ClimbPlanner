@@ -19,6 +19,8 @@ namespace ClimbPlanner
     private readonly List<GearItem> _gearItems = new List<GearItem>();
     private readonly ItemQuantityChangeTracker _itemQuantityChangeTracker = new ItemQuantityChangeTracker();
 
+    private bool _errorsDetected;
+
     public PlanAnalyser(in string planFilename)
     {
       _planFilename = planFilename;
@@ -61,10 +63,12 @@ namespace ClimbPlanner
       _gearItems.Clear();
       _itemQuantityChangeTracker.Reset();
 
+      _errorsDetected = false;
+
       try
       {
         var outputBuilder = new StringBuilder();
-        outputBuilder.Append("<html><body style='font-family:consolas;'>");
+        outputBuilder.Append("<html><body>");
 
         Thread.Sleep(500);
 
@@ -78,9 +82,13 @@ namespace ClimbPlanner
 
         outputBuilder.Append("</body></html>");
 
+        string output = outputBuilder.ToString();
+
+        ApplyBodyStyling(ref output, _errorsDetected);
+
         File.WriteAllText(
           $"{_planFilename}.output.html",
-          outputBuilder.ToString());
+          output);
 
         Console.WriteLine("Parsed OK");
       }
@@ -94,7 +102,7 @@ namespace ClimbPlanner
     {
       outputBuilder.AppendLine();
       outputBuilder.AppendLine("<p>");
-      outputBuilder.AppendLine($"<b>{action.Title}</b>");
+      outputBuilder.AppendLine($"<font size='+1'><b>{action.Title}</b></font>");
       outputBuilder.AppendLine("<br />");
 
       outputBuilder.AppendLine("<p>");
@@ -174,6 +182,12 @@ namespace ClimbPlanner
         item.Value.Name,
         transfer.Quantity);
 
+      if (debitEntity.QuantityByGearItem[item.Value] < 0 &&
+          !debitEntity.Name.Equals(GearStash, StringComparison.OrdinalIgnoreCase))
+      {
+        _errorsDetected = true;
+      }
+
       if (!string.IsNullOrWhiteSpace(transfer.Description))
       {
         outputBuilder.AppendLine($"{transfer.FromEntity} => {transfer.ToEntity} <b>:</b> ");
@@ -204,7 +218,9 @@ namespace ClimbPlanner
         }
 
         outputBuilder.AppendLine(
-          $"<div style='color:red;'>\"{entity.Name}\" requires {assert.Quantity} \"{assert.GearItem}(s)\"</div>");
+          $"<div style='color:red;'><b>\"{entity.Name}\" requires {assert.Quantity} \"{assert.GearItem}(s)\"</b></div>");
+
+        _errorsDetected = true;
       }
     }
 
@@ -220,7 +236,7 @@ namespace ClimbPlanner
 
     private void AppendEntityGearItemsTable(in StringBuilder outputBuilder)
     {
-      outputBuilder.Append("<p><table border='1' style='border-collapse:collapse; border-color:#b0b0b0;' cellpadding='3px'>");
+      outputBuilder.Append("<p><table border='1' style='border-collapse:collapse; border-color:#b0b0b0; background-color:white;' cellpadding='3px'>");
       outputBuilder.Append("<tr><td bgcolor='#f0f0f0'></td>");
 
       // Column headers (entities).
@@ -306,6 +322,17 @@ namespace ClimbPlanner
       }
 
       outputBuilder.Append("</table></p>");
+    }
+
+    private static void ApplyBodyStyling(
+      ref string html,
+      in bool errorsDetected)
+    {
+      string backgroundColour = errorsDetected ? "#e00000" : "#ffffff";
+
+      html = html.Replace(
+        "<body>",
+        $"<body style='font-family:consolas; background-color:{backgroundColour};'>");
     }
   }
 }
