@@ -328,7 +328,7 @@ namespace ClimbPlanner
       ref string html,
       in bool errorsDetected)
     {
-      string backgroundColour = errorsDetected ? "#e00000" : "#ffffff";
+      string backgroundColour = errorsDetected ? "#ffdfdf" : "#ffffff";
 
       html = html.Replace(
         "<body>",
