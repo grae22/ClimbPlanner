@@ -221,7 +221,7 @@ namespace ClimbPlanner
     private void AppendEntityGearItemsTable(in StringBuilder outputBuilder)
     {
       outputBuilder.Append("<p><table border='1' style='border-collapse:collapse; border-color:#b0b0b0;' cellpadding='3px'>");
-      outputBuilder.Append("<tr><td></td>");
+      outputBuilder.Append("<tr><td bgcolor='#f0f0f0'></td>");
 
       // Column headers (entities).
       foreach (var entity in _routeEntitiesByName.Values)
@@ -285,7 +285,14 @@ namespace ClimbPlanner
               changeHtml = $"(<font size='-1'>{quantityChange:+#;-#}</font>)";
             }
 
-            outputBuilder.Append($"<td align='center' bgcolor='{colour}'>{quantity} {changeHtml}</td>");
+            if (quantity > 0 || quantityChange != 0)
+            {
+              outputBuilder.Append($"<td align='center' bgcolor='{colour}'>{quantity} {changeHtml}</td>");
+            }
+            else
+            {
+              outputBuilder.Append("<td></td>");
+            }
 
             total += entity.QuantityByGearItem[item];
           }
