@@ -64,6 +64,7 @@ namespace ClimbPlanner
       try
       {
         var outputBuilder = new StringBuilder();
+        outputBuilder.Append("<html><body style='font-family:consolas;'>");
 
         Thread.Sleep(500);
 
@@ -74,6 +75,8 @@ namespace ClimbPlanner
         {
           ProcessPlanAction(action, outputBuilder);
         }
+
+        outputBuilder.Append("</body></html>");
 
         File.WriteAllText(
           $"{_planFilename}.output.html",
@@ -175,7 +178,7 @@ namespace ClimbPlanner
       if (!string.IsNullOrWhiteSpace(transfer.Description))
       {
         outputBuilder.AppendLine($"{transfer.FromEntity} => {transfer.ToEntity} <b>:</b> ");
-        outputBuilder.AppendLine($"({transfer.GearItem} x {transfer.Quantity}) <b>:</b> {transfer.Description}");
+        outputBuilder.AppendLine($"[{transfer.GearItem} x {transfer.Quantity}] <b>:</b> {transfer.Description}");
         outputBuilder.AppendLine("<br />");
       }
     }
@@ -248,8 +251,6 @@ namespace ClimbPlanner
             continue;
           }
 
-          outputBuilder.Append("<td align='center'>");
-
           if (entity.QuantityByGearItem.ContainsKey(item))
           {
             int quantity = entity.QuantityByGearItem[item];
@@ -261,31 +262,38 @@ namespace ClimbPlanner
 
             if (quantityChange > 0)
             {
-              colour = "#00c000";
+              colour = "#40cf40";
             }
             else if (quantityChange < 0)
             {
-              colour = "#f00000";
+              colour = "#ffa030";
             }
             else
             {
-              colour = "black";
+              colour = "#ffffff";
             }
 
             // Negative quantities are emphasized;
-            if (quantity > -1)
+            if (quantity < 0)
             {
-              outputBuilder.Append($"<span style='color:{colour};'>{quantity}</span>");
+              colour = "#ff0000";
             }
-            else
+
+            string changeHtml = string.Empty;
+
+            if (quantityChange != 0)
             {
-              outputBuilder.Append($"<span style='color:{colour}; font-weight:bold;'><b>({quantity})</b></span>");
+              changeHtml = $"(<font size='-1'>{quantityChange:+#;-#}</font>)";
             }
+
+            outputBuilder.Append($"<td align='center' bgcolor='{colour}'>{quantity} {changeHtml}</td>");
 
             total += entity.QuantityByGearItem[item];
           }
-
-          outputBuilder.Append("</td>");
+          else
+          {
+            outputBuilder.Append("<td></td>");
+          }
         }
 
         outputBuilder.Append($"<td align='center' bgcolor='#fff0f0'>{total}</td></tr>");
