@@ -107,6 +107,7 @@ namespace ClimbPlanner
 
       outputBuilder.AppendLine("<p>");
 
+      ProcessLocationChanges(action.LocationChanges);
       ProcessGearTransfers(action.GearTransfers, outputBuilder);
 
       outputBuilder.AppendLine("</p>");
@@ -115,7 +116,7 @@ namespace ClimbPlanner
       {
         AppendEntityGearItemsTable(outputBuilder);
       }
-
+      
       ProcessPossessionAsserts(action.PossessionAsserts, outputBuilder);
 
       outputBuilder.AppendLine("</p><hr />");
@@ -169,6 +170,16 @@ namespace ClimbPlanner
       var debitEntity = GetOrCreateRouteEntity(transfer.FromEntity);
       var creditEntity = GetOrCreateRouteEntity(transfer.ToEntity);
 
+      if (!AreEntitiesAtSameLocation(debitEntity, creditEntity))
+      {
+        outputBuilder.AppendLine(
+          $"<div style='color:red;'><b>ERROR: {transfer.FromEntity} => {transfer.ToEntity} [{transfer.GearItem} x {transfer.Quantity}] Locations do not match!</b></div>");
+
+        _errorsDetected = true;
+
+        return;
+      }
+
       debitEntity.RemoveGearItem(item.Value, transfer.Quantity);
       creditEntity.AssignGearItem(item.Value, transfer.Quantity);
 
@@ -196,6 +207,21 @@ namespace ClimbPlanner
       }
     }
 
+    private void ProcessLocationChanges(in IEnumerable<LocationChange> locationChanges)
+    {
+      if (locationChanges == null)
+      {
+        return;
+      }
+
+      foreach (var change in locationChanges)
+      {
+        RouteEntity entity = GetOrCreateRouteEntity(change.Entity);
+
+        entity.ChangeLocation(change.NewLocation);
+      }
+    }
+
     private void ProcessPossessionAsserts(
       in IEnumerable<AssertPossession> possessionAsserts,
       in StringBuilder outputBuilder)
@@ -218,7 +244,7 @@ namespace ClimbPlanner
         }
 
         outputBuilder.AppendLine(
-          $"<div style='color:red;'><b>\"{entity.Name}\" requires {assert.Quantity} \"{assert.GearItem}(s)\"</b></div>");
+          $"<div style='color:red;'><b>ERROR: \"{entity.Name}\" requires {assert.Quantity} \"{assert.GearItem}(s)\"</b></div>");
 
         _errorsDetected = true;
       }
@@ -247,7 +273,10 @@ namespace ClimbPlanner
           continue;
         }
 
-        outputBuilder.AppendLine($"<td bgcolor='#f0f0ff'><b>{entity.Name}</b></td>");
+        string location = entity.Location == entity.Name ? string.Empty : entity.Location;
+
+        outputBuilder.AppendLine(
+          $"<td bgcolor='#f0f0ff' valign='top'><b>{entity.Name}</b><br /><font size='-1'>{location}</font></td>");
       }
 
       outputBuilder.Append("<td bgcolor='#fff0f0'><b>Total<b/></td></tr>");
@@ -333,6 +362,14 @@ namespace ClimbPlanner
       html = html.Replace(
         "<body>",
         $"<body style='font-family:consolas; background-color:{backgroundColour};'>");
+    }
+
+    private static bool AreEntitiesAtSameLocation(in RouteEntity entity1, in RouteEntity entity2)
+    {
+      return
+        entity1.Location.Equals(GearStash, StringComparison.OrdinalIgnoreCase) ||
+        entity2.Location.Equals(GearStash, StringComparison.OrdinalIgnoreCase) ||
+        entity1.Location.Equals(entity2.Location, StringComparison.OrdinalIgnoreCase);
     }
   }
 }
