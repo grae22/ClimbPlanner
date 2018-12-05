@@ -282,7 +282,11 @@ namespace ClimbPlanner
       outputBuilder.Append("<td bgcolor='#fff0f0'><b>Total<b/></td></tr>");
 
       // Rows (items).
-      foreach(var item in _gearItems)
+      var sortedGearItems = new SortedList<string, GearItem>();
+
+      _gearItems.ForEach(g => sortedGearItems.Add(g.Name, g));
+
+      foreach(var item in sortedGearItems.Values)
       {
         int total = 0;
 
